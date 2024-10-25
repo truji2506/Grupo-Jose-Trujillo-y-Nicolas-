@@ -150,3 +150,6 @@ int main(int argc, char* argv[]) {​
 }
 ```
 ¿Cuál es el equivalente de join en la API de SDL2?
+
+¿Para qué sirven los semáforos en SDL2?
+Los semáforos en SDL2 se utilizan para controlar el acceso a recursos compartidos entre hilos, evitando condiciones de carrera y asegurando la sincronización.​
