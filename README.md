@@ -106,4 +106,43 @@ Crea ambos hilos (threadID1 y threadID2) casi al mismo tiempo y luego espera que
 Aquí, los hilos pueden ejecutarse en simultaneo, permitiendo que ambas tareas se realicen de manera coincidente.
 
 ## Ejercicio 7
+La creación de un hilo en SDL2
+En SDL2, los hilos se crean utilizando la función SDL_CreateThread(), que inicia un nuevo hilo de ejecución.​
+Ejemplo que se use un hilo de SDL2
 
+```c
+#include <SDL2/SDL.h>
+#include <stdio.h>
+
+// Función que será ejecutada en un hilo separado​
+int hiloFuncion(void* data) {
+    printf("Hola desde el hilo!\n");
+    return 0;
+}
+
+int main(int argc, char* argv[]) {​
+    // Inicializar SDL
+    if (SDL_Init(SDL_INIT_VIDEO) != 0) {
+        printf("Error al inicializar SDL: %s\n", SDL_GetError());​
+        return 1;
+    }
+
+    // Crear el hilo
+    SDL_Thread* hilo = SDL_CreateThread(hiloFuncion, "HiloEjemplo", NULL);​
+    if (hilo == NULL) {
+        printf("Error al crear el hilo: %s\n", SDL_GetError());
+        SDL_Quit();​
+        return 1;
+    }
+
+    // Esperar a que el hilo termine
+    int resultado;
+    SDL_WaitThread(hilo, &resultado);​
+
+    printf("Hilo terminado con resultado: %d\n", resultado);
+
+    SDL_Quit();
+    return 0;
+}
+```
+¿Cuál es el equivalente de join en la API de SDL2?
