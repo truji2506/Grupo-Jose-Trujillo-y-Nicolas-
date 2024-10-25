@@ -59,7 +59,7 @@ Estos estados pueden variar en número y definición según el sistema operativo
 Hilo principal: Ejecuta un bucle infinito que imprime "o".
 Hilo creado: Ejecuta la función imprime_x() en un bucle infinito que imprime "x".
 
-2.Funcionamiento
+2. Funcionamiento
 Al iniciar, el hilo principal crea un nuevo hilo con pthread_create(). Ambos hilos comparten el mismo espacio de memoria del proceso, 
 pero cada uno tiene su propio stack para variables locales. El sistema operativo asigna tiempo de CPU a cada hilo, alternando entre ellos, 
 por lo que en la consola se verá una mezcla de "x" y "o" imprimiéndose indefinidamente.
