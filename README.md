@@ -77,8 +77,8 @@ para hacer que el hilo principal espere a que ambos hilos terminen de ejecutar s
 
 Para esperar a que un hilo en particular termine, debes usar la función pthread_join(). Esta función bloquea la ejecución del hilo principal hasta que el hilo especificado complete su tarea. 
 En el código anterior:
-´´´c
+```c
 pthread_join(threadID1, NULL);
 pthread_join(threadID2, NULL);
-´´´
+```
 Estas líneas aseguran que el hilo principal espere a que los hilos threadID1 y threadID2 terminen antes de que el programa finalice.
