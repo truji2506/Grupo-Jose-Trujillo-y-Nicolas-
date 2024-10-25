@@ -82,3 +82,28 @@ pthread_join(threadID1, NULL);
 pthread_join(threadID2, NULL);
 ```
 Estas líneas aseguran que el hilo principal espere a que los hilos threadID1 y threadID2 terminen antes de que el programa finalice.
+
+La diferencia entre los codigos dos codigos de fragmentos de codigo esta en el orden que son creados y esperados
+primer parte del codigo 
+```c
+pthread_create(&threadID1, NULL, &imprime, &threadParam1);
+pthread_join(threadID1, NULL);
+pthread_create(&threadID2, NULL, &imprime, &threadParam2);
+pthread_join(threadID2, NULL);
+```
+Crea el primer hilo treadID1 y espera a que termine antes de crear el segundo hilo threadID2
+
+Por lo que evidencio es que lo hilos se ejecutan uno despues del otro, de forma secuencial. threadID2 no comenzará hasta que threadID1 haya terminado completamente.
+
+Segunda parte del codigo 
+```c
+pthread_create(&threadID1,NULL,&imprime, &threadParam1);
+pthread_create(&threadID2,NULL,&imprime, &threadParam2);
+pthread_join(threadID1,NULL);
+pthread_join(threadID2,NULL);
+```
+Crea ambos hilos (threadID1 y threadID2) casi al mismo tiempo y luego espera que ambos terminen.
+Aquí, los hilos pueden ejecutarse en simultaneo, permitiendo que ambas tareas se realicen de manera coincidente.
+
+## Ejercicio 7
+
