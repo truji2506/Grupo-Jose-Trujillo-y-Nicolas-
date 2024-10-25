@@ -69,6 +69,6 @@ por lo que en la consola se verá una mezcla de "x" y "o" imprimiéndose indefin
 Al ejecutar el programa, es posible que no se vea ninguna salida en la consola o que se observe un resultado inconsistente. Esto ocurre porque, 
 aunque los hilos se crean con pthread_create, el programa principal (hilo principal) termina casi inmediatamente debido a exit(EXIT_SUCCESS);, 
 lo cual finaliza el proceso y detiene ambos hilos antes de que logren ejecutar el código de impresión.
-##  Hipotesis
+Hipotesis
 El problema es que el hilo principal termina su ejecución antes de que los hilos creados completen su tarea. Esto se puede solucionar utilizando pthread_join() 
 para hacer que el hilo principal espere a que ambos hilos terminen de ejecutar su función antes de finalizar el programa.
