@@ -107,8 +107,11 @@ Aquí, los hilos pueden ejecutarse en simultaneo, permitiendo que ambas tareas s
 
 ## Ejercicio 7
 ¿Cómo se crea un hilo?
+
 La creación de un hilo en SDL2
+
 En SDL2, los hilos se crean utilizando la función SDL_CreateThread(), que inicia un nuevo hilo de ejecución.​
+
 Ejemplo que se use un hilo de SDL2
 
 ```c
