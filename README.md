@@ -1,4 +1,4 @@
-# Grupo-Jose-Trujillo-y-Nicolas-
+# Grupo-Jose-Trujillo-y-Nicolas-Quintero
 
 ## Ejercicio 1
 
