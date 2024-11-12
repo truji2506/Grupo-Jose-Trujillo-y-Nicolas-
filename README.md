@@ -150,6 +150,7 @@ int main(int argc, char* argv[]) {​
 }
 ```
 ¿Cuál es el equivalente de join en la API de SDL2?
+El equivalente de join en la API de SDL2 es la función SDL_WaitThread. Esta función permite que el hilo principal (o cualquier otro hilo) espere a que un hilo específico termine su ejecución
 
 ¿Para qué sirven los semáforos en SDL2?
 Los semáforos en SDL2 se utilizan para controlar el acceso a recursos compartidos entre hilos, evitando condiciones de carrera y asegurando la sincronización.​
