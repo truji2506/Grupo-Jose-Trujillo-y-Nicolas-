@@ -281,3 +281,531 @@ Dado que el semáforo permite que 4 hilos accedan simultáneamente, los mensajes
 
 Conclusión
 El uso de un semáforo con un valor mayor a 1 permite sincronizar hilos sin restringirlos tanto como lo haría un mutex, proporcionando flexibilidad para control de concurrencia en sistemas multihilo.
+
+## CODIGO 
+### main.c
+```c
+#include "game.h"
+
+int main(int argc, char* argv[]) {
+    Game game;
+    if (!Game_Init(&game)) return -1;
+
+    while (game.running) {
+        Game_HandleEvents(&game);
+        Game_Update(&game);
+        Game_Render(&game);
+    }
+
+    Game_Clean(&game);
+    return 0;
+}
+```
+### game.h
+```c
+#ifndef GAME_H
+#define GAME_H
+
+#include <SDL.h>
+#include "player.h"
+#include "enemy.h"
+#include "powerup.h"
+#include "audio.h"
+
+typedef struct {
+    SDL_Window* window;
+    SDL_Renderer* renderer;
+    int running;
+    Player player;
+    Enemy enemies[4];
+    PowerUp powerUp;
+} Game;
+
+int Game_Init(Game* game);
+void Game_HandleEvents(Game* game);
+void Game_Update(Game* game);
+void Game_Render(Game* game);
+void Game_Clean(Game* game);
+
+#endif
+```
+### game.c
+```c
+#include "game.h"
+#include "audio.h"
+#include <stdlib.h>
+
+int Game_Init(Game* game) {
+    if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO) != 0) {
+        SDL_Log("Error inicializando SDL: %s", SDL_GetError());
+        return 0;
+    }
+
+    game->window = SDL_CreateWindow("Juego de SDL", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 800, 600, 0);
+    if (!game->window) {
+        SDL_Log("Error creando ventana: %s", SDL_GetError());
+        SDL_Quit();
+        return 0;
+    }
+
+    game->renderer = SDL_CreateRenderer(game->window, -1, SDL_RENDERER_ACCELERATED);
+    if (!game->renderer) {
+        SDL_Log("Error creando renderer: %s", SDL_GetError());
+        SDL_DestroyWindow(game->window);
+        SDL_Quit();
+        return 0;
+    }
+
+    if (InitAudio("sounds/background.wav") != 0) {
+        SDL_Log("Error inicializando audio");
+        return 0;
+    }
+    PlayGameStartSound();
+
+    Player_Init(&game->player, game->renderer, 400, 300);
+    for (int i = 0; i < 4; i++) {
+        Enemy_Init(&game->enemies[i], game->renderer, (i % 2) * 750 + 50, (i / 2) * 550 + 50);
+    }
+    PowerUp_Init(&game->powerUp, game->renderer, rand() % 750 + 25, rand() % 550 + 25);
+
+    game->running = 1;
+    return 1;
+}
+
+void Game_HandleEvents(Game* game) {
+    SDL_Event event;
+    while (SDL_PollEvent(&event)) {
+        if (event.type == SDL_QUIT) {
+            game->running = 0;
+        }
+        Player_HandleInput(&game->player, event);
+    }
+}
+
+void Game_Update(Game* game) {
+    Player_Update(&game->player);
+
+    for (int i = 0; i < 4; i++) {
+        Enemy_Update(&game->enemies[i], &game->player);
+        if (Enemy_IsAlive(&game->enemies[i]) && CheckCollision(&game->player.rect, &game->enemies[i].rect)) {
+            PlayCollisionSound();
+            Enemy_TakeDamage(&game->enemies[i]);
+        }
+    }
+
+    if (Player_CollectsPowerUp(&game->player, &game->powerUp)) {
+        PlayPowerUpSound();
+        Player_Upgrade(&game->player);
+        PowerUp_Init(&game->powerUp, game->renderer, rand() % 750 + 25, rand() % 550 + 25);
+    }
+
+    if (game->player.health <= 0) {
+        PlayGameOverSound();
+        game->running = 0;
+    }
+}
+
+void Game_Render(Game* game) {
+    SDL_SetRenderDrawColor(game->renderer, 0, 0, 0, 255);
+    SDL_RenderClear(game->renderer);
+
+    Player_Render(&game->player);
+    for (int i = 0; i < 4; i++) {
+        Enemy_Render(&game->enemies[i]);
+    }
+    PowerUp_Render(&game->powerUp);
+
+    SDL_RenderPresent(game->renderer);
+}
+
+void Game_Clean(Game* game) {
+    CloseAudio();
+    SDL_DestroyRenderer(game->renderer);
+    SDL_DestroyWindow(game->window);
+    SDL_Quit();
+}
+```
+### player.h
+```c
+#ifndef PLAYER_H
+#define PLAYER_H
+
+#include <SDL.h>
+#include "bullet.h"
+#include "powerup.h"
+
+typedef struct {
+    SDL_Renderer* renderer;
+    SDL_Rect rect;
+    int health;
+    int speed;
+    int powerLevel;
+} Player;
+
+void Player_Init(Player* player, SDL_Renderer* renderer, int x, int y);
+void Player_HandleInput(Player* player, SDL_Event event);
+void Player_Update(Player* player);
+void Player_Render(Player* player);
+void Player_Upgrade(Player* player);
+int Player_CollectsPowerUp(Player* player, PowerUp* powerUp);
+
+#endif
+```
+### player.c
+```c
+#include "player.h"
+#include <math.h>
+
+void Player_Init(Player* player, SDL_Renderer* renderer, int x, int y) {
+    player->renderer = renderer;
+    player->rect.x = x;
+    player->rect.y = y;
+    player->rect.w = 50;
+    player->rect.h = 50;
+    player->powerLevel = 1;
+    player->speed = 5;
+}
+
+void Player_HandleInput(Player* player, SDL_Event event, Bullet bullets[], int maxBullets) {
+    const Uint8* keystate = SDL_GetKeyboardState(NULL);
+
+    // Movimiento con teclas W, A, S, D
+    if (keystate[SDL_SCANCODE_W]) player->rect.y -= player->speed;
+    if (keystate[SDL_SCANCODE_S]) player->rect.y += player->speed;
+    if (keystate[SDL_SCANCODE_A]) player->rect.x -= player->speed;
+    if (keystate[SDL_SCANCODE_D]) player->rect.x += player->speed;
+
+    // Disparo con clic izquierdo en dirección al mouse
+    if (event.type == SDL_MOUSEBUTTONDOWN && event.button.button == SDL_BUTTON_LEFT) {
+        int mouseX, mouseY;
+        SDL_GetMouseState(&mouseX, &mouseY);
+
+        float dx = mouseX - (player->rect.x + player->rect.w / 2);
+        float dy = mouseY - (player->rect.y + player->rect.h / 2);
+        float length = sqrtf(dx * dx + dy * dy);
+
+        if (length != 0) {
+            dx /= length;
+            dy /= length;
+        }
+
+        for (int i = 0; i < maxBullets; i++) {
+            if (!bullets[i].active) {
+                Bullet_Init(&bullets[i], player->renderer, player->rect.x + player->rect.w / 2, player->rect.y + player->rect.h / 2, dx, dy);
+                break;
+            }
+        }
+    }
+}
+
+void Player_Update(Player* player) {
+    // Limitamos al jugador dentro de la ventana
+    if (player->rect.x < 0) player->rect.x = 0;
+    if (player->rect.x > 750) player->rect.x = 750;
+    if (player->rect.y < 0) player->rect.y = 0;
+    if (player->rect.y > 550) player->rect.y = 550;
+}
+
+void Player_Render(Player* player) {
+    SDL_SetRenderDrawColor(player->renderer, 0, 255, 0, 255);
+    SDL_RenderFillRect(player->renderer, &player->rect);
+}
+
+int Player_CollidesWithPowerUp(Player* player, PowerUp* powerUp) {
+    return SDL_HasIntersection(&player->rect, &powerUp->rect);
+}
+
+void Player_Upgrade(Player* player) {
+    player->powerLevel++;
+    player->speed++;
+}
+```
+### Enemy.h
+```c
+#ifndef ENEMY_H
+#define ENEMY_H
+
+#include <SDL.h>
+#include "player.h"
+
+typedef struct {
+    SDL_Renderer* renderer;
+    SDL_Rect rect;
+    int health;
+    int speed;
+} Enemy;
+
+void Enemy_Init(Enemy* enemy, SDL_Renderer* renderer, int x, int y);
+void Enemy_Update(Enemy* enemy, Player* player);
+void Enemy_Render(Enemy* enemy);
+int Enemy_IsAlive(Enemy* enemy);
+void Enemy_TakeDamage(Enemy* enemy);
+
+#endif
+```
+### Enemy.c
+```c
+#ifndef ENEMY_H
+#define ENEMY_H
+
+#include <SDL.h>
+#include "player.h"
+
+typedef struct {
+    SDL_Renderer* renderer;
+    SDL_Rect rect;
+    int health;
+    int speed;
+} Enemy;
+
+void Enemy_Init(Enemy* enemy, SDL_Renderer* renderer, int x, int y);
+void Enemy_Update(Enemy* enemy, Player* player);
+void Enemy_Render(Enemy* enemy);
+int Enemy_IsAlive(Enemy* enemy);
+void Enemy_TakeDamage(Enemy* enemy);
+
+#endif
+#include "enemy.h"
+#include <math.h>
+
+void Enemy_Init(Enemy* enemy, SDL_Renderer* renderer, int x, int y) {
+    enemy->renderer = renderer;
+    enemy->rect.x = x;
+    enemy->rect.y = y;
+    enemy->rect.w = 40;
+    enemy->rect.h = 40;
+    enemy->health = 3;
+    enemy->speed = 1;  // Velocidad ajustada para seguir al jugador suavemente
+}
+
+void Enemy_Update(Enemy* enemy, Player* player) {
+    if (enemy->health > 0) {
+        float dx = player->rect.x - enemy->rect.x;
+        float dy = player->rect.y - enemy->rect.y;
+        float distance = sqrtf(dx * dx + dy * dy);
+
+        if (distance != 0) {
+            dx = (dx / distance) * enemy->speed;
+            dy = (dy / distance) * enemy->speed;
+
+            enemy->rect.x += (int)dx;
+            enemy->rect.y += (int)dy;
+        }
+    }
+}
+
+void Enemy_Render(Enemy* enemy) {
+    if (enemy->health > 0 && enemy->renderer) {
+        SDL_SetRenderDrawColor(enemy->renderer, 255, 0, 0, 255);
+        SDL_RenderFillRect(enemy->renderer, &enemy->rect);
+    }
+}
+
+int Enemy_IsAlive(Enemy* enemy) {
+    return enemy->health > 0;
+}
+
+void Enemy_TakeDamage(Enemy* enemy) {
+    if (enemy->health > 0) {
+        enemy->health--;
+    }
+}
+```
+### powerup.h
+```c
+#ifndef POWERUP_H
+#define POWERUP_H
+
+#include <SDL.h>
+
+typedef struct {
+    SDL_Renderer* renderer;
+    SDL_Rect rect;
+    int active;
+} PowerUp;
+
+void PowerUp_Init(PowerUp* powerUp, SDL_Renderer* renderer, int x, int y);
+void PowerUp_Render(PowerUp* powerUp);
+void PowerUp_Deactivate(PowerUp* powerUp);
+
+#endif
+```
+### powerup.c
+```c
+#include "powerup.h"
+
+void PowerUp_Init(PowerUp* powerUp, SDL_Renderer* renderer, int x, int y) {
+    powerUp->renderer = renderer;
+    powerUp->rect.x = x;
+    powerUp->rect.y = y;
+    powerUp->rect.w = 20;
+    powerUp->rect.h = 20;
+    powerUp->active = 1;
+}
+
+void PowerUp_Render(PowerUp* powerUp) {
+    if (powerUp->active && powerUp->renderer) {
+        SDL_SetRenderDrawColor(powerUp->renderer, 0, 0, 255, 255);
+        SDL_RenderFillRect(powerUp->renderer, &powerUp->rect);
+    }
+}
+
+void PowerUp_Deactivate(PowerUp* powerUp) {
+    powerUp->active = 0;
+}
+```
+### Bullet.c
+```c
+#include "bullet.h"
+
+void Bullet_Init(Bullet* bullet, SDL_Renderer* renderer, int x, int y, float dirX, float dirY) {
+    bullet->renderer = renderer;
+    bullet->rect.x = x;
+    bullet->rect.y = y;
+    bullet->rect.w = 5;
+    bullet->rect.h = 10;
+    bullet->active = 1;
+    bullet->speed = 10;
+    bullet->dirX = dirX;
+    bullet->dirY = dirY;
+}
+
+void Bullet_Update(Bullet* bullet) {
+    if (bullet->active) {
+        bullet->rect.x += (int)(bullet->speed * bullet->dirX);
+        bullet->rect.y += (int)(bullet->speed * bullet->dirY);
+
+        if (bullet->rect.x < 0  bullet->rect.x > 800  bullet->rect.y < 0 || bullet->rect.y > 600) {
+            Bullet_Deactivate(bullet);
+        }
+    }
+}
+
+void Bullet_Render(Bullet* bullet) {
+    if (bullet->active && bullet->renderer && bullet->rect.w > 0 && bullet->rect.h > 0) {
+        SDL_SetRenderDrawColor(bullet->renderer, 255, 255, 0, 255);
+        SDL_RenderFillRect(bullet->renderer, &bullet->rect);
+    }
+}
+
+void Bullet_Deactivate(Bullet* bullet) {
+    bullet->active = 0;
+}
+
+int Bullet_IsActive(Bullet* bullet) {
+    return bullet->active;
+}
+
+int Bullet_CollidesWith(Bullet* bullet, Enemy* enemy) {
+    if (bullet->active && Enemy_IsAlive(enemy) && SDL_HasIntersection(&bullet->rect, &enemy->rect)) {
+        Bullet_Deactivate(bullet);
+        Enemy_TakeDamage(enemy);
+        return 1;
+    }
+    return 0;
+}
+```
+### Bullet.h
+```c
+#ifndef BULLET_H
+#define BULLET_H
+
+#include <SDL.h>
+#include "enemy.h"
+
+typedef struct {
+    SDL_Renderer* renderer;
+    SDL_Rect rect;
+    int active;
+    int speed;
+    float dirX;
+    float dirY;
+} Bullet;
+
+void Bullet_Init(Bullet* bullet, SDL_Renderer* renderer, int x, int y, float dirX, float dirY);
+void Bullet_Update(Bullet* bullet);
+void Bullet_Render(Bullet* bullet);
+void Bullet_Deactivate(Bullet* bullet);
+int Bullet_IsActive(Bullet* bullet);
+int Bullet_CollidesWith(Bullet* bullet, Enemy* enemy);
+
+#endif
+```
+### Audio.h
+```c
+#ifndef AUDIO_H
+#define AUDIO_H
+
+int InitAudio(const char* file);
+void PlaySound(const char* file);
+void CloseAudio();
+
+void PlayGameStartSound();
+void PlayPowerUpSound();
+void PlayCollisionSound();
+void PlayGameOverSound();
+void PlayBackgroundSound();
+
+#endif
+```
+### Audio.c
+```c
+#include <SDL.h>
+#include "audio.h"
+
+SDL_sem* audioSemaphore;
+Uint8* audioBuffer;
+Uint32 audioLength;
+SDL_AudioSpec audioSpec;
+
+void AudioCallback(void* userdata, Uint8* stream, int len) {
+    if (audioLength == 0) {
+        SDL_SemPost(audioSemaphore);
+        return;
+    }
+
+    len = (len > audioLength ? audioLength : len);
+    SDL_memcpy(stream, audioBuffer, len);
+    audioBuffer += len;
+    audioLength -= len;
+}
+
+int InitAudio(const char* file) {
+    if (SDL_LoadWAV(file, &audioSpec, &audioBuffer, &audioLength) == NULL) {
+        SDL_Log("Error cargando archivo de sonido: %s", SDL_GetError());
+        return -1;
+    }
+
+    audioSpec.callback = AudioCallback;
+    if (SDL_OpenAudio(&audioSpec, NULL) < 0) {
+        SDL_Log("Error inicializando audio: %s", SDL_GetError());
+        return -1;
+    }
+
+    audioSemaphore = SDL_CreateSemaphore(1);
+    return 0;
+}
+
+void PlaySound(const char* file) {
+    SDL_SemWait(audioSemaphore);
+
+    if (SDL_LoadWAV(file, &audioSpec, &audioBuffer, &audioLength) == NULL) {
+        SDL_Log("Error cargando archivo de sonido: %s", SDL_GetError());
+        return;
+    }
+
+    SDL_PauseAudio(0);
+}
+
+void CloseAudio() {
+    SDL_CloseAudio();
+    SDL_FreeWAV(audioBuffer);
+    SDL_DestroySemaphore(audioSemaphore);
+}
+
+void PlayGameStartSound() { PlaySound("sounds/start.wav"); }
+void PlayPowerUpSound() { PlaySound("sounds/powerup.wav"); }
+void PlayCollisionSound() { PlaySound("sounds/collision.wav"); }
+void PlayGameOverSound() { PlaySound("sounds/gameover.wav"); }
+void PlayBackgroundSound() { PlaySound("sounds/background.wav"); }
+```
