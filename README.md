@@ -210,3 +210,14 @@ Analizando el ejemplo presentado en esta actividad, nos damos cuenta que hubo un
 Se definio la funcion function la cual se ejecutara cuando los hilos se inicien, lo que obtuvimos en la consulta que realizamos fue que la unica funcion que hace es incrementar el valor de shared en 1
 despues vemos los hilos como thr1 y thr2 usando pthread_create y cada hilo ejecutara function
 despues de la creación de los hilos pthread_join asegura que el programa espere a que thr1 y thr2 terminen de ejecutarse antes de avanzar, sin pthread_join el programa podria terminar antes de que los hilos completen sus tarea y finalmente se imprime el valor de shared, el valor de shared debería ser 2, ya que cada hilo incrementa shared en 1
+
+## ACTIVIDAD 10
+
+Cuando agregamos el bucle en la función function, incrementando la variable compartida shared dentro de un ciclo de ITERATIONS (100 en este caso), el problema de la condición de carrera es más evidente. Esto es porque ahora cada hilo intenta modificar shared muchas veces, aumentando la probabilidad de que se interrumpan mutuamente y causen resultados inesperados.
+Cada hilo realizará shared++ 100 veces, por lo que esperaríamos que el valor final de shared sea 200 (100 incrementos por cada uno de los dos hilos). Sin embargo, al incrementar el número de iteraciones, puede que el valor impreso no sea 200 sino algo menor. Esto es debido a que los hilos acceden y modifican shared sin ninguna sincronización, provocando una race condition.
+La instrucción shared++ implica varias operaciones a nivel de máquina:
+
+Leer el valor actual de shared.
+Incrementar el valor leído en 1.
+Escribir el valor incrementado de vuelta en shared.
+Cuando no existe sincronización, los dos hilos pueden leer el mismo valor de shared casi al mismo tiempo, incrementar ese mismo valor y escribirlo, provocando que algunas actualizaciones se pierdan.
