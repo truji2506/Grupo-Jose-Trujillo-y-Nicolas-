@@ -153,3 +153,18 @@ int main(int argc, char* argv[]) {​
 
 ¿Para qué sirven los semáforos en SDL2?
 Los semáforos en SDL2 se utilizan para controlar el acceso a recursos compartidos entre hilos, evitando condiciones de carrera y asegurando la sincronización.​
+
+## Actividad 8 
+
+Se creo un proyecto nuevo en el visual para poder correr el programa planteado 
+
+![image](https://github.com/user-attachments/assets/78d7a6e9-7285-40e0-976e-829dedfed756)
+
+Además se le creo las constantes en el constant.c y corre de esta forma 
+
+![image](https://github.com/user-attachments/assets/318595a1-4a73-409c-bf77-578e25bb33df)
+
+
+![image](https://github.com/user-attachments/assets/316385f2-6ea8-4ca4-9c3a-5d876e8dd4e9)
+
+
