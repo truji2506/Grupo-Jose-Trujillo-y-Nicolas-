@@ -171,5 +171,33 @@ Se añadio el sonido .WAV a la carpeta de visual al momento de reproducirlo con 
 
 ![image](https://github.com/user-attachments/assets/70eb8a52-2c30-49f9-b0b7-285a0329dc20)
 
+A la final pudimmos hacer que reproduzca el sonido, nos aseguramos que el archivo se llamara tap y se llevo al directorio ppal del proyecto, nos aseguramos que todo el codigo que estuviera comentado no lo estuviera como la parte del audioSpec, no dimos cuenta que en el mismo codigo decia que para reproducir usar la letra P, Pero a momento de reproducir el sonido una segunda vez se queda cargando 
 
+![image](https://github.com/user-attachments/assets/954d3eaf-8357-49fb-96f7-54ef4ba7c215)
 
+Realizando la respectiva verificacion del codigo, nos damos cuenta que el audio se reproduce una vez, pero si se vuelve a presionar P antes de que termine la reproducción actual, el programa intenta reproducir el mismo archivo en paralelo, lo que puede causar errores como el que nos paso de que se queda cargando el programa
+
+Por ende se añadio un semaforo AudioSemaphore para controlar la reproducción de audio y evitar que se reproduzca varias veces el sonido y se pueda controlar
+Inicializamos el semáforo en initialize_window() con un valor inicial de 1, lo que nos permite acceso a una única reproducción de audio a la vez
+```c
+audioSemaphore = SDL_CreateSemaphore(1);
+```
+Ademas se realizo una modificación en Play_audio() para que antes de iniciar la reproducción de audio, el semaforo es bloqueado usando SDL_SemWait(audioSemaphore), esto nos ayuda a controlar otros audios mientras uno se encuentre en reproducción 
+
+y utilizandoo el semaforo se libera con SDL_SemPost(audioSemaphore), permitiendo que el audio este disponible para la proxima reproduccion
+```c
+SDL_SemWait(audioSemaphore); // Espera hasta que el audio esté disponible para reproducir
+SDL_SemPost(audioSemaphore); // Señal de que el audio está libre
+```
+
+Tuvimos algunos inconvenientes en la creacion del hilo y tuvimos que realizar una consulta a chatgpt para que la reproduccion del audio sea independiente y que no bloquee el resto del juego y nos ayudo con esto 
+Se modifica el bloque process_input() para lanzar play_audio() en un hilo cuando se presiona la tecla P, pero solo si el semáforo indica que el audio está libre (SDL_SemValue(audioSemaphore) > 0).
+```c
+if (SDL_SemValue(audioSemaphore) > 0) {
+    SDL_CreateThread((SDL_ThreadFunction)play_audio, "AudioThread", NULL);
+}
+```
+y ya en destroy_window() se agrega la destruccion del semaforo para liberar recursos cuando el programa termina
+```c
+SDL_DestroySemaphore(audioSemaphore);
+```
