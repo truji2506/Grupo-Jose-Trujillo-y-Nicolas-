@@ -283,7 +283,7 @@ Conclusión
 El uso de un semáforo con un valor mayor a 1 permite sincronizar hilos sin restringirlos tanto como lo haría un mutex, proporcionando flexibilidad para control de concurrencia en sistemas multihilo.
 
 ## CODIGO 
-
+Se realizaron varias pruebas para que compilara el codigo, buscamos ayuda para corregir algunos errores que teniamos en el linea 24 de Bullet.c se realizo la corrección pero siguio fallando al momento de compilar, se le intento agregar 5 sonidos, de inicio, powerup, colision, game over y sonido de fondo pero no lo evidenciamos ya que el codigo no nos compilo, añadimos la funcion de audio callback y se añadio dos semaforos, se le añadio un hilo principal del juego que ejecuta la logica, la gestion de eventos y la renderización, ademas un hilo de audio con callback que maneja la reproduccion en segundo plano y permite que el audio se procese sin interferir en el flujo del juego y solo se añadio un semaforo (Audiosemaphore) este semaforo asegura que solo un sonido se reproduzca a la vez y esta definido en audio.c  
 ![WhatsApp Image 2024-11-12 at 10 51 54 AM](https://github.com/user-attachments/assets/91aa5204-aeb4-40aa-8f73-721e0a7827e6)
 
 ![WhatsApp Image 2024-11-12 at 10 53 33 AM](https://github.com/user-attachments/assets/7e75c6ef-ee2d-4464-9a30-dac31e7c38ab)
