@@ -201,3 +201,6 @@ y ya en destroy_window() se agrega la destruccion del semaforo para liberar recu
 ```c
 SDL_DestroySemaphore(audioSemaphore);
 ```
+![image](https://github.com/user-attachments/assets/561bc615-2609-4057-9644-c20b75d01b4b)
+
+
