@@ -155,7 +155,7 @@ El equivalente de join en la API de SDL2 es la función SDL_WaitThread. Esta fun
 ¿Para qué sirven los semáforos en SDL2?
 Los semáforos en SDL2 se utilizan para controlar el acceso a recursos compartidos entre hilos, evitando condiciones de carrera y asegurando la sincronización.​
 
-## Actividad 8 
+## ACTIVIDAD 8 
 
 Se creo un proyecto nuevo en el visual para poder correr el programa planteado 
 
@@ -204,4 +204,9 @@ SDL_DestroySemaphore(audioSemaphore);
 ```
 ![image](https://github.com/user-attachments/assets/561bc615-2609-4057-9644-c20b75d01b4b)
 
+## ACTIVIDAD 9
 
+Analizando el ejemplo presentado en esta actividad, nos damos cuenta que hubo una declaración de variable shared donde mas adelante del codigo se usaran el los hilos y su valor inicial es 0
+Se definio la funcion function la cual se ejecutara cuando los hilos se inicien, lo que obtuvimos en la consulta que realizamos fue que la unica funcion que hace es incrementar el valor de shared en 1
+despues vemos los hilos como thr1 y thr2 usando pthread_create y cada hilo ejecutara function
+despues de la creación de los hilos pthread_join asegura que el programa espere a que thr1 y thr2 terminen de ejecutarse antes de avanzar, sin pthread_join el programa podria terminar antes de que los hilos completen sus tarea y finalmente se imprime el valor de shared, el valor de shared debería ser 2, ya que cada hilo incrementa shared en 1
