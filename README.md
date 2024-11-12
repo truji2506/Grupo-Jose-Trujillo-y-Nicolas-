@@ -244,3 +244,40 @@ La variable shared debe tener el valor 200 al final (100 incrementos por cada hi
 
 Conclusión
 Gracias al uso del mutex, este programa evita condiciones de carrera, asegurando que el recurso compartido shared se incremente de forma consistente y segura por ambos hilos.
+
+## ACTIVIDAD 12
+
+En este programa, se usa un semáforo (semMessage) para controlar el acceso de múltiples hilos a una sección crítica en lugar de un mutex. Vamos a analizar cómo funciona este mecanismo y en qué se diferencia del uso de un mutex.
+
+Análisis del código
+Declaración e inicialización del semáforo:
+
+Se declara un semáforo (sem_t semMessage) que controla el acceso a la sección crítica.
+sem_init(&semMessage, 0, 4); inicializa el semáforo con un valor de 4, lo que permite que hasta 4 hilos puedan ejecutar la sección crítica simultáneamente. La inicialización del semáforo con un valor mayor a 1 es una característica distintiva de los semáforos, en contraste con los mutex, que solo permiten un acceso a la vez.
+Función routine:
+
+Dentro de routine, cada hilo llama a sem_wait(&semMessage); antes de entrar en la sección crítica. Esto decrementa el contador del semáforo. Si el contador es mayor que 0, el hilo entra en la sección crítica; si es 0, el hilo se bloquea hasta que otro hilo libere el semáforo.
+La línea sem_post(&semMessage); se ejecuta al final de la sección crítica para incrementar el contador del semáforo y liberar el acceso, permitiendo que otros hilos entren en la sección crítica.
+Esta función también libera la memoria asignada para el identificador del hilo (free(args);).
+Creación y ejecución de hilos:
+
+El main crea 4 hilos (THREAD_NUM = 4) y les pasa un identificador único como argumento.
+pthread_create(&th[i], NULL, &routine, a); inicia cada hilo con la función routine.
+Luego, pthread_join(th[i], NULL); asegura que el main espere a que todos los hilos terminen antes de continuar y destruir el semáforo.
+Destrucción del semáforo:
+
+Después de que todos los hilos terminan, sem_destroy(&semMessage); libera los recursos asociados con el semáforo.
+Diferencias clave entre mutex y semáforos
+Control de acceso múltiple:
+
+Un mutex solo permite que un hilo a la vez acceda a una sección crítica. Es ideal cuando solo un hilo debe tener acceso exclusivo.
+Un semáforo puede configurarse para permitir que múltiples hilos accedan a la sección crítica al mismo tiempo, dependiendo del valor de inicialización. En este caso, el semáforo permite que hasta 4 hilos accedan simultáneamente.
+Uso en sincronización:
+
+Los mutexes se usan más comúnmente para sincronizar el acceso a recursos compartidos, asegurando que solo un hilo entre a la vez.
+Los semáforos pueden usarse también para la sincronización de múltiples hilos, permitiendo o restringiendo el acceso simultáneo en función de su valor.
+Salida esperada
+Dado que el semáforo permite que 4 hilos accedan simultáneamente, los mensajes de "Hello from thread X" pueden aparecer en cualquier orden, ya que todos los hilos tienen permiso para acceder sin esperar. Sin embargo, todos imprimirán su mensaje sin problemas de acceso simultáneo a la misma sección crítica.
+
+Conclusión
+El uso de un semáforo con un valor mayor a 1 permite sincronizar hilos sin restringirlos tanto como lo haría un mutex, proporcionando flexibilidad para control de concurrencia en sistemas multihilo.
