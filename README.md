@@ -167,4 +167,9 @@ Además se le creo las constantes en el constant.c y corre de esta forma
 
 ![image](https://github.com/user-attachments/assets/316385f2-6ea8-4ca4-9c3a-5d876e8dd4e9)
 
+Se añadio el sonido .WAV a la carpeta de visual al momento de reproducirlo con la letra P sale esto 
+
+![image](https://github.com/user-attachments/assets/70eb8a52-2c30-49f9-b0b7-285a0329dc20)
+
+
 
