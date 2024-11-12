@@ -221,3 +221,26 @@ Leer el valor actual de shared.
 Incrementar el valor leído en 1.
 Escribir el valor incrementado de vuelta en shared.
 Cuando no existe sincronización, los dos hilos pueden leer el mismo valor de shared casi al mismo tiempo, incrementar ese mismo valor y escribirlo, provocando que algunas actualizaciones se pierdan.
+
+## ACTIVIDAD 11
+
+Este programa en C crea dos hilos (thr1 y thr2) que acceden a un recurso compartido, la variable global shared. Cada hilo incrementa esta variable en cada iteración de un bucle de 100 iteraciones. Para evitar condiciones de carrera (race conditions), el programa utiliza un mutex (mxShared) que asegura que solo un hilo a la vez pueda modificar shared.
+
+Análisis del código
+Recurso compartido: La variable global shared se usa como recurso compartido que ambos hilos intentarán incrementar.
+
+Exclusión mutua con mutex: El mutex (mxShared) se inicializa en el main() y se utiliza en la función function() que ejecutan ambos hilos. Dentro del bucle de la función, el mutex asegura la exclusión mutua:
+
+pthread_mutex_lock(&mxShared); bloquea el mutex antes de que un hilo incremente la variable shared.
+pthread_mutex_unlock(&mxShared); libera el mutex después de que el hilo haya incrementado la variable, permitiendo que el otro hilo pueda acceder al recurso compartido.
+Ejecución y sincronización de hilos:
+
+Se crean los hilos thr1 y thr2 con pthread_create, que ejecutan la función function.
+pthread_join() asegura que el main() espere a que ambos hilos terminen su ejecución antes de imprimir el valor de shared.
+Destrucción del mutex: Después de que ambos hilos han terminado, el mutex es destruido con pthread_mutex_destroy(&mxShared);.
+
+Salida esperada
+La variable shared debe tener el valor 200 al final (100 incrementos por cada hilo) ya que la exclusión mutua evita que los incrementos se pierdan debido a una race condition.
+
+Conclusión
+Gracias al uso del mutex, este programa evita condiciones de carrera, asegurando que el recurso compartido shared se incremente de forma consistente y segura por ambos hilos.
