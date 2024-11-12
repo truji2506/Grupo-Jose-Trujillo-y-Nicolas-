@@ -283,6 +283,13 @@ Conclusión
 El uso de un semáforo con un valor mayor a 1 permite sincronizar hilos sin restringirlos tanto como lo haría un mutex, proporcionando flexibilidad para control de concurrencia en sistemas multihilo.
 
 ## CODIGO 
+
+![WhatsApp Image 2024-11-12 at 10 51 54 AM](https://github.com/user-attachments/assets/91aa5204-aeb4-40aa-8f73-721e0a7827e6)
+
+![WhatsApp Image 2024-11-12 at 10 53 33 AM](https://github.com/user-attachments/assets/7e75c6ef-ee2d-4464-9a30-dac31e7c38ab)
+
+![WhatsApp Image 2024-11-12 at 10 53 26 AM](https://github.com/user-attachments/assets/179cde2c-9ed9-48d8-9673-5c5e6f71764c)
+
 ### main.c
 ```c
 #include "game.h"
